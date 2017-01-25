@@ -1,0 +1,25 @@
+{
+  "name": "AINews",
+  "version": "1.0.0",
+  "description": "Associate images with news",
+  "main": "server.js",
+  "dependencies": {
+    "crawler": "^1.0.2",
+    "express": "^4.14.0",
+    "nodemon": "^1.11.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Veselin-Genadiev/AINews"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Veselin-Genadiev/AINews/issues"
+  },
+  "homepage": "https://github.com/Veselin-Genadiev/AINews"
+}
