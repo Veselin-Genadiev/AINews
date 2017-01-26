@@ -4,7 +4,9 @@ var Crawler = function () {
 	var Crawler = require('crawler');
 	var jsdom = require('jsdom');
 
+	this.fs = require('fs');
 	this.urls = [];
+	this.filePaths = [];
 	this.crawler = new Crawler({
 		maxConnections: 3,
 		rateLimit: 2000,
@@ -20,6 +22,12 @@ var Crawler = function () {
 		}
 	});
 };
+
+Crawler.prototype.WriteNewsEntry = function (prefix, url, title, text, date) {
+	var filePath = 'docs/' + prefix + date.valueOf();
+	this.filePaths.push(filePath);
+	this.fs.writeFile(filePath, url + '\r\n\r\n' + title + '\r\n\r\n' + text)
+}
 
 Crawler.prototype.GlobalNewsCallback = function (error, res, done) {
 	if (error) {
@@ -82,7 +90,7 @@ Crawler.prototype.GlobalNewsCallback = function (error, res, done) {
 			}
 		}
 
-		var title = $('h1.story-h').text();
+		var title = $('h1.story-h').text().trim();
 		var texts = $('span.gnca-article-story-txt > p');
 		var url = res.options.url;
 		var fullText = '';
@@ -108,7 +116,7 @@ Crawler.prototype.GlobalNewsCallback = function (error, res, done) {
 	    dateCreated = new Date(Date.parse(dateCreatedString));
 
 		if (url && title && fullText && dateCreated) {
-			console.log(title);
+			this.WriteNewsEntry('globalnews', url, title, fullText, dateCreated);
 		}
 	}
 
@@ -169,8 +177,7 @@ Crawler.prototype.TheGuardianNewsCallback = function (error, res, done) {
 		var dateCreated = new Date(dateCreatedString);
 
 		if (title && fullText && url && dateCreated) {
-			console.log(title);
-			console.log(dateCreated);
+			this.WriteNewsEntry('theguardian', url, title, fullText, dateCreated);
 		}
 	}
 
