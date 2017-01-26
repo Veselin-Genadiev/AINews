@@ -55,11 +55,37 @@ Crawler.prototype.GlobalNewsCallback = function (error, res, done) {
 	        }
 	    });
 
-		if (url && title && fullText) {
+		var dateCreated;
+		var dateModified;
+		var dateCreatedString = '';
+		var dateModifiedString = '';
+
+	    var dates = $('div.meta-bar-time-group > span.meta-bar-date');
+	    var times = $('div.meta-bar-time-group > span.meta-bar-time');
+
+	    if (dates && times && dates.length > 0 && times.length > 0) {
+	    	var dateString = dates[0].children[0].data;
+	    	var timeString = times[1].children[0].data;
+	    	dateCreatedString = dateString + ' ' + timeString;
+	    }
+
+	    if (dates && times && dates.length > 0 && times.length > 0) {
+	    	var dateString = dates[1].children[0].data;
+	    	var timeString = times[1].children[0].data;
+	    	dateModifiedString = dateString + ' ' + timeString;
+	    }
+
+	    dateCreated = new Date(Date.parse(dateCreatedString));
+	    dateModified = new Date(Date.parse(dateModifiedString));
+
+		if (url && title && fullText && dateCreated && dateModified) {
 			console.log(url);
 			console.log(title);
 			console.log(fullText);
+			console.log(dateCreated);
+			console.log(dateModified);
 		}
+
 	}
 
 	done();
