@@ -4,6 +4,7 @@ var Crawler = function () {
 	var Crawler = require('crawler');
 	var jsdom = require('jsdom');
 
+	this.currentDocId = 1;
 	this.fs = require('fs');
 	this.urls = [];
 	this.filePaths = [];
@@ -23,15 +24,34 @@ var Crawler = function () {
 	});
 };
 
-Crawler.prototype.WriteNewsEntry = function (prefix, url, title, text, date) {
-	var filePath = 'docs/' + prefix + date.valueOf();
+Crawler.prototype.LoadAvailableEntries = function() {
+	var files = this.fs.readdirSync('./docs/');
+
+	if (files && files.length > 0) {
+		files.forEach(file => {
+			var content = this.fs.readFileSync('./docs/' + file, "utf8");
+			var json = JSON.parse(content);
+			this.urls.push(json.url);
+
+			if (this.currentDocId <= json.id) {
+				this.currentDocId = json.id + 1;
+			}
+		});
+	}
+}
+
+Crawler.prototype.WriteNewsEntry = function (url, title, text, date, tags) {
+	var filePath = './docs/' + this.currentDocId + '.txt';
 	this.filePaths.push(filePath);
-	this.fs.writeFile(filePath, url + '\r\n\r\n' + title + '\r\n\r\n' + text)
+	var json = JSON.stringify({'id': this.currentDocId, 'url': url, 'title': title, 'date': date, 'text': text, 'tags': tags});
+	this.currentDocId++;
+	this.fs.writeFile(filePath, json);
 }
 
 Crawler.prototype.GlobalNewsCallback = function (error, res, done) {
 	if (error) {
 		console.log(error);
+		this.QueueGlobalNews();
 	} else if (res.options.url == 'http://globalnews.ca/world/') {
 		var $ = res.$;
 		//queue more links
@@ -115,8 +135,17 @@ Crawler.prototype.GlobalNewsCallback = function (error, res, done) {
 
 	    dateCreated = new Date(Date.parse(dateCreatedString));
 
-		if (url && title && fullText && dateCreated) {
-			this.WriteNewsEntry('globalnews', url, title, fullText, dateCreated);
+	    var tagElements = $('.story-tags > .story-tag > a');
+	    var tags = [];
+
+	    tagElements.contents().each(function() {
+	        if (this.nodeType == 3 && this.textContent) {
+	            tags.push(this.textContent.trim());
+	        }
+	    });
+
+		if (url && title && fullText && dateCreated && tags.length > 0) {
+			this.WriteNewsEntry(url, title, fullText, dateCreated, tags);
 		}
 	}
 
@@ -140,6 +169,7 @@ Crawler.prototype.QueueTheGuardianNews = function() {
 Crawler.prototype.TheGuardianNewsCallback = function (error, res, done) {
 	if (error) {
 		console.log(error);
+		console.log(res.options.url);
 	} else if (res.options.url == 'https://www.theguardian.com/world/all' ||
 				res.options.url.startsWith('https://www.theguardian.com/world?page=')) {
 		var $ = res.$;
@@ -147,14 +177,19 @@ Crawler.prototype.TheGuardianNewsCallback = function (error, res, done) {
 		var moreStories = $('div.fc-item > div.fc-item__container > a');
 
 		for (var i = 0; i < moreStories.length; i++) {
-			this.crawler.queue([{
-				url: moreStories[i].href,
-				callback: this.TheGuardianNewsCallback.bind(this)
-			}]);
+			if (this.urls.indexOf(moreStories[i].href) < 0) {
+				this.urls.push(moreStories[i].href);
+			
+				this.crawler.queue([{
+					url: moreStories[i].href,
+					callback: this.TheGuardianNewsCallback.bind(this)
+				}]);
+			}
 		}
 
-		var nextButton = $('a.pagination__action--static');
-		if (nextButton.length == 1) {
+		var nextButton = $('a[rel="next"].pagination__action--static');
+
+		if (nextButton.length > 0) {
 			this.crawler.queue([{
 				url: nextButton[0].href,
 				callback: this.TheGuardianNewsCallback.bind(this)
@@ -176,8 +211,17 @@ Crawler.prototype.TheGuardianNewsCallback = function (error, res, done) {
 		var dateCreatedString = $('time.content__dateline-wpd').attr('datetime');
 		var dateCreated = new Date(dateCreatedString);
 
-		if (title && fullText && url && dateCreated) {
-			this.WriteNewsEntry('theguardian', url, title, fullText, dateCreated);
+		var tagElements = $('.keyword-list > .inline-list__item > a');
+	    var tags = [];
+
+	    tagElements.contents().each(function() {
+	        if (this.nodeType == 3 && this.textContent) {
+	            tags.push(this.textContent.trim());
+	        }
+	    });
+
+		if (url && title && fullText && dateCreated && tags.length > 0) {
+			this.WriteNewsEntry(url, title, fullText, dateCreated, tags);
 		}
 	}
 
