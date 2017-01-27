@@ -4,16 +4,16 @@
   "description": "Associate images with news",
   "main": "server.js",
   "dependencies": {
+    "body-parser": "^1.16.0",
     "crawler": "^1.0.2",
     "elasticsearch": "^12.1.3",
     "express": "^4.14.0",
     "fs": "0.0.1-security",
     "jsdom": "^9.9.1",
-    "nodemon": "^1.11.0"
+    "node-flickr": "^1.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js --ignore 'docs/*'"
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",

@@ -3,8 +3,25 @@
 	<head>
 	  	<meta charset="UTF-8">
 	  	<title>Associate images with news</title>
+	    <link rel="stylesheet" type="text/css" href="/css/index.css">
 	</head>
 	<body>
+		<form id="search_form" class="form-wrapper cf">
+		  	<input id="text" type="text" placeholder="Search here..." required>
+		    <button type="submit">Search</button>
+		</form>
 
+		<div id="results">
+			<ul id="results_list">
+			</ul>
+		</div>
+
+		<div id="related_images" class="slideshow-container">
+		</div>
+
+		<script type="text/javascript" src="js/jquery.min.js">
+		</script>
+		<script type="text/javascript" src="js/index.js">
+		</script>
 	</body>
 </html>

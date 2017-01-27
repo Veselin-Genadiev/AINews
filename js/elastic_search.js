@@ -9,19 +9,21 @@ var ElasticSearch = function () {
 };
 
 ElasticSearch.prototype.Search = function(terms) {
-	var body = {
+	var searchBody = {
 		"size" : 20,
 		"sort": [
 			{"date": {"order": "desc"}}
 		],
 		"query": {
 		    "multi_match" : {
-		      "query":    terms,
+		      "query": terms,
 		      "fields": [ "title", "tags" ] ,
-		  	  "fuzziness": 2
+		  	  "fuzziness": 1
 		    }
 		  }
-		}
+		};
+
+	return this.client.search({index: 'news', type: "article", body: searchBody});
 };
 
 ElasticSearch.prototype.DeleteIndex = function() {
@@ -89,7 +91,7 @@ ElasticSearch.prototype.CreateIndex = function() {
 			      "filter": {
 			        "english_stop": {
 			          "type":       "stop",
-			          "stopwords":  "_english_" 
+			          "stopwords":  ["a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in", "into", "is", "it", "no", "not", "of", "on", "or", "such", "that", "the", "their", "then", "there", "these", "they", "this", "to", "was", "will", "with"],
 			        },
 			        "english_stemmer": {
 			          "type":       "stemmer",
