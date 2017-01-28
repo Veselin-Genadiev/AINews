@@ -161,7 +161,7 @@ Crawler.prototype.QueueGlobalNews = function () {
 
 Crawler.prototype.QueueTheGuardianNews = function() {
 	this.crawler.queue([{
-		url: 'https://www.theguardian.com/world/all',
+		url: 'https://www.theguardian.com/international',
 		callback: this.TheGuardianNewsCallback.bind(this)
 	}]);
 }
@@ -169,9 +169,19 @@ Crawler.prototype.QueueTheGuardianNews = function() {
 Crawler.prototype.TheGuardianNewsCallback = function (error, res, done) {
 	if (error) {
 		console.log(error);
-		console.log(res.options.url);
-	} else if (res.options.url == 'https://www.theguardian.com/world/all' ||
-				res.options.url.startsWith('https://www.theguardian.com/world?page=')) {
+	}
+	else if (res.options.url == 'https://www.theguardian.com/international') {
+		var $ = res.$;
+		var moreCategories = $('.top-navigation__item > a');
+
+		for (var i = 0; i < moreCategories.length; i++) {
+			this.crawler.queue([{
+				url: moreCategories[i].href + '/all',
+				callback: this.TheGuardianNewsCallback.bind(this)
+			}]);
+		}
+	} else if (res.options.url.includes('/all') ||
+				res.options.url.includes('?page=')) {
 		var $ = res.$;
 		//queue more links
 		var moreStories = $('div.fc-item > div.fc-item__container > a');
