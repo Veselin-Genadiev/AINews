@@ -17,8 +17,8 @@ ElasticSearch.prototype.Search = function(terms) {
 		"query": {
 		    "multi_match" : {
 		      "query": terms,
-		      "fields": [ "title", "tags", "text" ] ,
-		  	  "fuzziness": 1
+		      "fields": [ "title", "tags" ] ,
+		  	  "fuzziness": 2
 		    }
 		  }
 		};

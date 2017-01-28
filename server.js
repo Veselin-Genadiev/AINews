@@ -8,7 +8,7 @@ craw.LoadAvailableEntries();
 //craw.QueueTheGuardianNews();
 var ElasticSearch = require('./js/elastic_search.js');
 var elastic = new ElasticSearch();
-//elastic.UpdateIndex();
+elastic.UpdateIndex();
 var fs = require('fs');;
 var ImageRetriever = require('./js/image_retriever.js');
 var imr = new ImageRetriever();
