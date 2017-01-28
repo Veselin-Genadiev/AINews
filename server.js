@@ -5,7 +5,7 @@ var app = express();
 var Crawler = require('./js/crawler.js');
 var craw = new Crawler();
 craw.LoadAvailableEntries();
-//craw.QueueTheGuardianNews();
+craw.QueueTheGuardianNews();
 var ElasticSearch = require('./js/elastic_search.js');
 var elastic = new ElasticSearch();
 elastic.UpdateIndex();
@@ -68,6 +68,6 @@ app.get('/js/jquery.min.js', function (request, response) {
 	 response.sendFile(__dirname + '/js/jquery.min.js');
 });
 
-app.listen(3001, function () {
+app.listen(3000, function () {
   	console.log('Example app listening on port 3000!');
 });

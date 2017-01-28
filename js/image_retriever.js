@@ -4,29 +4,52 @@ var ImageRetriever = function () {
 	var Flickr = require("node-flickr");
 	var keys = {"api_key": apiKey}
 	this.flickr = new Flickr(keys);
+	this.photos = [];
+	this.pairs = [];
 };
 
-ImageRetriever.prototype.GetPhotos = function (tags, callback) {
-	var actualCallback = function (err, result) {
-	    if (err) return console.error(err);
+Array.prototype.pairs = function () {
+    var pairs = [];
+    for (var i = 0; i < this.length - 1; i++) {
+        for (var j = i + 1; j < this.length; j++) {
+        	pairs.push([this[i], this[j]]);
+        }
+    }
 
-	    var photos = [];
+    return pairs
+};
+
+
+ImageRetriever.prototype.GetPhotos = function (tags, callback) {
+    this.photos = [];
+    this.pairs = [];
+	
+	var actualCallback = function (err, result) {
+	    this.pairs.pop();
+
+	    if (err) return console.error(err);
 
 	    for (var i = 0; i <= result.photos.photo.length; i++) {
 	    	var photo = result.photos.photo[i];
 	
 	    	if (photo) {
 		    	var url = "https://farm" + photo.farm + ".staticflickr.com/" + photo.server + "/" + photo.id + "_" + photo.secret + ".jpg";
-		    	photos.push(url);
+		    	this.photos.push(url);
 	    	}
 	    };
 
-	    if (callback) {
-		    callback(photos);
+	    console.log(this.photos.length);
+	    if (this.pairs.length == 0 && callback) {
+	    	console.log('callback');
+		    callback(this.photos);
 	    }
 	};
 	
-	this.flickr.get("photos.search", {"tags": tags.join()}, actualCallback);
+	this.pairs = tags.pairs();
+
+	for (var i = 0; i < this.pairs.length; i++) {
+		this.flickr.get("photos.search", {"tags": this.pairs[i].join(), "sort": "relevance"}, actualCallback.bind(this));
+	}
 };
 
 module.exports = ImageRetriever;
