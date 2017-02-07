@@ -38,9 +38,7 @@ ImageRetriever.prototype.GetPhotos = function (tags, callback) {
 	    	}
 	    };
 
-	    console.log(this.photos.length);
 	    if (this.pairs.length == 0 && callback) {
-	    	console.log('callback');
 		    callback(this.photos);
 	    }
 	};

@@ -11,9 +11,6 @@ var ElasticSearch = function () {
 ElasticSearch.prototype.Search = function(terms) {
 	var searchBody = {
 		"size" : 20,
-		"sort": [
-			{"date": {"order": "desc"}}
-		],
 		"query": {
 		    "multi_match" : {
 		      "query": terms,
@@ -44,15 +41,6 @@ ElasticSearch.prototype.CreateIndex = function() {
 		            "type": "long"
 		          },
 		          "tags": {
-		            "type": "text",
-		            "fields": {
-		              "keyword": {
-		                "type": "keyword",
-		                "ignore_above": 256
-		              }
-		            }
-		          },
-		          "text": {
 		            "type": "text",
 		            "fields": {
 		              "keyword": {
@@ -146,6 +134,7 @@ ElasticSearch.prototype.BulkInsertDocuments = function () {
 		files.forEach(file => {
 			var content = this.fs.readFileSync('./docs/' + file, "utf8");
 			var json = JSON.parse(content);
+			delete json.text;
 			jsons.push(json);
 		});
 	}
