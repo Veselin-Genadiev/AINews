@@ -1,3 +1,5 @@
+'use strict';
+
 var ElasticSearch = function () {
 	this.elastic = require('elasticsearch');
 	this.fs = require('fs');

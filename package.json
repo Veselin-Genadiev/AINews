@@ -12,7 +12,8 @@
     "jsdom": "^9.9.1",
     "limdu": "^0.8.0",
     "natural": "^0.4.0",
-    "node-flickr": "^1.0.0"
+    "node-flickr": "^1.0.0",
+    "tar.gz": "^1.0.5"
   },
   "scripts": {
     "start": "node server.js"

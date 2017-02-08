@@ -1,3 +1,5 @@
+'use strict';
+
 var ImageRetriever = function () {
 	var fs = require('fs');
 	var apiKey = fs.readFileSync('flickr.txt', "utf8");

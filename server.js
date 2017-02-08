@@ -2,16 +2,43 @@
 
 var express = require('express');
 var app = express();
+
+var FeatureExtractor = require('./js/feature_extractor.js');
+
+var ft = new FeatureExtractor(function(error) {
+	if (error) {
+		console.log(error);
+	} else {
+		// Extract features for all documents.
+	}
+});
+
 var Crawler = require('./js/crawler.js');
 var craw = new Crawler();
 craw.LoadAvailableEntries();
 craw.QueueTheGuardianNews();
+
 var ElasticSearch = require('./js/elastic_search.js');
 var elastic = new ElasticSearch();
 elastic.UpdateIndex();
+
+var targz = require('tar.gz');
 var fs = require('fs');;
+
 var ImageRetriever = require('./js/image_retriever.js');
 var imr = new ImageRetriever();
+
+// Extract 20newsgroup
+if (!fs.existsSync('20newsgroup')) {
+	console.log('Extracting 20newsgroup...');
+
+	targz().extract('20news-bydate.tar.gz', '20newsgroup', function(err){
+	  if(err)
+	    console.log('Something is wrong ', err.stack);
+
+	  console.log('Extracted 20newsgroup!');
+	});
+}
 
 var bodyParser = require('body-parser')
 
