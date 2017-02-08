@@ -1,4 +1,12 @@
 'use strict';
+var path = require('path');
+var natural = require('natural');
+var fs = require('fs');
+
+function getDirectories (srcpath) {
+  return fs.readdirSync(srcpath)
+    .filter(file => fs.statSync(path.join(srcpath, file)).isDirectory())
+}
 
 Set.prototype.isSuperset = function(subset) {
     for (var elem of subset) {
@@ -36,23 +44,70 @@ Set.prototype.difference = function(setB) {
 };
 
 var FeatureExtractor = function (callback) {
-	this.natural = require('natural');
-	this.fs = require('fs');
-	this.natural.PorterStemmer.attach();
-	this.tokenizer = new this.natural.WordTokenizer();
+	natural.PorterStemmer.attach();
+	this.tokenizer = new natural.WordTokenizer();
 	this.allFeatureSet = new Set();
-	this.rowFeturesList = [];
+	this.testRowsFeturesList = [];
+	this.trainingRowFeaturesList = [];
+	this.tfidfTops = {};
 
 	var base_folder = "./node_modules/natural/lib/natural/brill_pos_tagger";
 	var rulesFilename = base_folder + "/data/English/tr_from_posjs.txt";
 	var lexiconFilename = base_folder + "/data/English/lexicon_from_posjs.json";
 	var defaultCategory = 'N';
 
-	this.tagger = new this.natural.BrillPOSTagger(lexiconFilename, rulesFilename, defaultCategory, callback);
+	this.tagger = new natural.BrillPOSTagger(lexiconFilename, rulesFilename, defaultCategory, callback);
 };
 
-FeatureExtractor.prototype.ExtractDocument = function (text, category, addToFeatureVector) {
+FeatureExtractor.prototype.ExtractCategories = function (rootFolder, isTraining) {
+	var categories = getDirectories(rootFolder);
+	
+	if (isTraining) {
+		for (var i = 0; i < categories.length; i++) {
+			var tfidf = new natural.TfIdf();
+			var newsCategory = categories[i];
+			var files = fs.readdirSync(rootFolder + "/" + newsCategory);
+			files.forEach(file => tfidf.addFileSync(rootFolder + "/" + newsCategory + "/" + file));
+			this.tfidfTops[newsCategory] = tfidf.listTerms(0).splice(0, 1000);
+		}
+
+	}
+	
+	for (var i = 0; i < categories.length; i++) {
+		var newsCategory = categories[i];
+		var files = fs.readdirSync(rootFolder + "/" + newsCategory);
+
+		files.forEach(file => {
+			var text = fs.readFileSync(rootFolder + "/" + newsCategory + "/" + file, "utf8");
+			this.AddDocument(text, newsCategory, isTraining);
+		});
+	}
+};
+
+FeatureExtractor.prototype.AddDocument = function (text, category, isTraining) {
+	var featuresSet = this.ExtractDocument(text, isTraining, category);
+	var features = Array.from(featuresSet);
+	features.push(category);
+
+	if (isTraining) {
+		this.allFeatureSet = this.allFeatureSet.union(featuresSet);
+	}
+
+	if (isTraining) {
+		this.trainingRowFeaturesList.push(features);
+	} else {
+		this.testRowsFeturesList.push(features);
+	}
+
+	if (this.trainingRowFeaturesList.length % 100 == 0) {
+		console.log(this.trainingRowFeaturesList.length);
+		console.log(this.allFeatureSet.size);
+	}
+};
+
+FeatureExtractor.prototype.ExtractDocument = function (text, isTraining, category) {
 	var features = [];
+	text = text.toLowerCase();
 
 	// Pos tagger - count part of speech
 	var tokens = this.tokenizer.tokenize(text);
@@ -74,27 +129,39 @@ FeatureExtractor.prototype.ExtractDocument = function (text, category, addToFeat
 	}
 
 	// bigrams, trigrams
-	var bigrams = this.natural.NGrams.bigrams(tokens);
-	var trigrams = this.natural.NGrams.trigrams(tokens);
+	var bigrams = natural.NGrams.bigrams(tokens);
+
+	if (category != null) {
+		bigrams = bigrams.filter(bigram => bigram.filter(b => this.tfidfTops[category].includes(b)) > 0);
+	}
+	
+	var trigrams = natural.NGrams.trigrams(tokens);
+	
+	if (category != null) {
+		trigrams = trigrams.filter(trigram => trigram.filter(t => this.tfidfTops[category].includes(t)) > 0);
+	}
 
 	// stems
-	var stems = text.tokenizeAndStem();
+	if (category != null) {
+		tokens = tokens.filter(token => this.tfidfTops[category].includes(token));
+	}
+
+	var stems = tokens.join(' ').tokenizeAndStem();
 	
 
 	// collect all features
-	features = features.concat(bigrams.map(bigram => bigram.join(' ')))
+	features = features
+	.concat(bigrams.map(bigram => bigram.join(' ')))
 	.concat(trigrams.map(trigram => trigram.join(' ')))
 	.concat(posFeatures)
 	.concat(stems);
-	var featuresSet = new Set(features);
-	features = Array.from(featuresSet);
 
-	if (addToFeatureVector) {
-		this.allFeatureSet = this.allFeatureSet.union(featuresSet);
+	if (!isTraining) {
+		features = features.filter(feature => this.allFeatureSet.has(feature));
 	}
 
-	features.push(category);
-	this.rowFeturesList.push(features);
+	var featuresSet = new Set(features);
+	return featuresSet;
 };
 
 module.exports = FeatureExtractor;

@@ -3,15 +3,7 @@
 var express = require('express');
 var app = express();
 
-var FeatureExtractor = require('./js/feature_extractor.js');
-
-var ft = new FeatureExtractor(function(error) {
-	if (error) {
-		console.log(error);
-	} else {
-		// Extract features for all documents.
-	}
-});
+var natural = require('natural');
 
 var Crawler = require('./js/crawler.js');
 var craw = new Crawler();
@@ -20,25 +12,40 @@ craw.QueueTheGuardianNews();
 
 var ElasticSearch = require('./js/elastic_search.js');
 var elastic = new ElasticSearch();
-elastic.UpdateIndex();
 
 var targz = require('tar.gz');
-var fs = require('fs');;
+var fs = require('fs');
 
 var ImageRetriever = require('./js/image_retriever.js');
 var imr = new ImageRetriever();
 
-// Extract 20newsgroup
-if (!fs.existsSync('20newsgroup')) {
-	console.log('Extracting 20newsgroup...');
+var FeatureExtractor = require('./js/feature_extractor.js');
 
-	targz().extract('20news-bydate.tar.gz', '20newsgroup', function(err){
-	  if(err)
-	    console.log('Something is wrong ', err.stack);
+var ft = new FeatureExtractor(function(error) {
+	if (error) {
+		console.log(error);
+	} else {
+		// Extract 20newsgroup
+		if (!fs.existsSync('20newsgroup')) {
+			console.log('Extracting 20newsgroup...');
 
-	  console.log('Extracted 20newsgroup!');
-	});
-}
+			targz().extract('20news-bydate.tar.gz', '20newsgroup', function(err){
+			  if(err)
+			    console.log('Something is wrong ', err.stack);
+
+			  console.log('Extracted 20newsgroup!');
+			});
+		}
+
+		// Extract features for all documents.
+		var trainSetFolder = '20newsgroup/20news-bydate-train';
+		var testSetFolder = '20newsgroup/20news-bydate-test';
+
+		ft.ExtractCategories(trainSetFolder, true);
+		ft.ExtractCategories(testSetFolder, false);
+		elastic.UpdateIndex();
+	}
+});
 
 var bodyParser = require('body-parser')
 
