@@ -1,5 +1,20 @@
 'use strict';
 
+var modal = document.getElementById('myModal');
+
+var span = document.getElementsByClassName("close")[0];
+
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
 $(document).ready(function () {
     $('#search_form').submit(function (event) {
       event.preventDefault();
@@ -10,7 +25,8 @@ $(document).ready(function () {
         resultsList.html('');
         res.forEach(item => {
             resultsList.append("<li><a href='" + item.url +"'>" + item.title +
-             "</a><button class='related_button' id='"+ item.id +"'>Related images:</button></li>");
+             "</a><button class='related_button' id='"+ item.id +"'>Related images:</button></li>" +
+             "</a><button class='classify_button' id='"+ item.id +"'>Category?:</button></li>");
         });
       });
     });
@@ -29,6 +45,14 @@ $(document).ready(function () {
                 '<a class="next" onclick="plusSlides(1)">&#10095;</a>');
 
             showSlides(1);
+        });
+    });
+
+    $(document).on('click', '.classify_button', function () {
+        $.post('/category', {'id': this.id}, function (res) {
+            $('#modal_image').attr('src', '/images/' + res + '.jpg');
+            $('#modal_image').attr('alt', res);
+            modal.style.display = "block";
         });
     });
 });
