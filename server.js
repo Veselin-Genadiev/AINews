@@ -21,7 +21,9 @@ var imr = new ImageRetriever();
 
 var FeatureExtractor = require('./js/feature_extractor.js');
 var NaiveBayes = require('./js/naive_bayes.js');
-var naiveBayes = null;
+var classifier = null;
+
+
 
 var ft = new FeatureExtractor(function(error) {
 	if (error) {
@@ -64,11 +66,12 @@ var ft = new FeatureExtractor(function(error) {
 		}
 
 		ft.ExtractCategories(testSetFolder, extractedTestSetFolder, false);
-
 		var trainingSet = ft.GetTrainingRowsFeatures();
 		var testSet = ft.GetTestRowsFeatures();
 
-		naiveBayes = new NaiveBayes(trainingSet, testSet);
+		console.log('train');
+		classifier = new NaiveBayes(trainingSet, testSet);
+		console.log('trainend');
 
 		elastic.UpdateIndex();
 	}
@@ -132,8 +135,8 @@ app.post('/category', function (req, res) {
 	var features = ft.ExtractDocument(text);
 	var documentCategory = null;
 
-	if (naiveBayes != null) {
-		documentCategory = naiveBayes.Classify(features);
+	if (classifier != null) {
+		documentCategory = classifier.Classify(features);
 	}
 
 	res.send(documentCategory);

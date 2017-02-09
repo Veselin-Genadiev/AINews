@@ -2,16 +2,15 @@
 var path = require('path');
 var natural = require('natural');
 var fs = require('fs');
-//var categories = ['alt.atheism', 'comp.graphics', 'comp.os.ms-windows.misc', 'comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware',
-//'comp.windows.x', 'misc.forsale', 'rec.autos', 'rec.motorcycles', 'rec.sport.baseball', 'rec.sport.hockey', 'sci.crypt', 'sci.electronics',
-//'sci.med', 'sci.space', 'soc.religion.christian', 'talk.politics.guns', 'talk.politics.mideast', 'talk.politics.misc', 'talk.religion.misc'];
+var categories = ['alt.atheism', 'comp.graphics', 'comp.os.ms-windows.misc', 'comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware',
+'comp.windows.x', 'misc.forsale', 'rec.autos', 'rec.motorcycles', 'rec.sport.baseball', 'rec.sport.hockey', 'sci.crypt', 'sci.electronics',
+'sci.med', 'sci.space', 'soc.religion.christian', 'talk.politics.guns', 'talk.politics.mideast', 'talk.politics.misc', 'talk.religion.misc'];
 
-var categories = ['rec.autos', 'rec.sport.baseball', 'sci.electronics', 'sci.space', 'talk.politics.misc', 'talk.religion.misc'];
+//var categories = ['rec.autos', 'rec.sport.baseball', 'sci.electronics', 'sci.space', 'talk.politics.misc', 'talk.religion.misc'];
 
 function getDirectories (srcpath) {
-	return categories;
- // return fs.readdirSync(srcpath)
-  //  .filter(file => fs.statSync(path.join(srcpath, file)).isDirectory())
+	return fs.readdirSync(srcpath)
+	.filter(file => fs.statSync(path.join(srcpath, file)).isDirectory())
 }
 
 Set.prototype.isSuperset = function(subset) {

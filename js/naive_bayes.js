@@ -6,12 +6,12 @@ var NaiveBayes  = function (trainSet, testSet) {
 	this.testSet = testSet;
 	this.naiveBayes = null;
 
-	this.BuildNaiveBayes();
-	this.TrainNaiveBayes();
-	//this.CrossValidateNaiveBayes();
+	this.Build();
+	this.Train();
+	this.Test();
 };
 
-NaiveBayes.prototype.BuildNaiveBayes = function () {
+NaiveBayes.prototype.Build = function () {
 	var WordExtractor = function(input, features) {
 		input.forEach(feature => features[feature] = 1);
 	};
@@ -23,7 +23,7 @@ NaiveBayes.prototype.BuildNaiveBayes = function () {
 	});
 };
 
-NaiveBayes.prototype.TrainNaiveBayes = function () {
+NaiveBayes.prototype.Train = function () {
 	var trainBatch = this.trainSet.map(function (features) {
 		return {input: features, output: features[features.length - 1]};
 	});
@@ -31,26 +31,22 @@ NaiveBayes.prototype.TrainNaiveBayes = function () {
 	this.naiveBayes.trainBatch(trainBatch);
 };
 
-NaiveBayes.prototype.CrossValidateNaiveBayes = function () {
-	var microAverage = new limdu.utils.PrecisionRecall();
-	var macroAverage = new limdu.utils.PrecisionRecall();
-	
-	var testBatch = this.testSet.map(function (features) {
-		return {input: features, output: features[features.length - 1]};
-	});
+NaiveBayes.prototype.Test = function () {
+	var errors = 0;
 
-	limdu.utils.test(this.naiveBayes, this.testSet, /* verbosity = */0,
-        microAverage, macroAverage);
+	for (var i = 0; i < this.testSet.length; i++) {
+		var features = this.testSet[i];
+		var category = this.naiveBayes.classify(features);
+		if (category != features[features.length - 1]) {
+			errors++;
+		}
+	};
 
-	macroAverage.calculateMacroAverageStats(numOfFolds);
-	console.log("\n\nMACRO AVERAGE:"); console.dir(macroAverage.fullStats());
-
-	microAverage.calculateStats();
-	console.log("\n\nMICRO AVERAGE:"); console.dir(microAverage.fullStats());
+	console.log('Accuracy: ' + (this.testSet.length - errors) / this.testSet.length)
 };
 
 NaiveBayes.prototype.Classify = function (features) {
 	return this.naiveBayes.classify(features);
-}
+};
 
 module.exports = NaiveBayes;
