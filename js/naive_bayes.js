@@ -50,7 +50,6 @@ NaiveBayes.prototype.CrossValidateNaiveBayes = function () {
 };
 
 NaiveBayes.prototype.Classify = function (features) {
-	console.log(features);
 	return this.naiveBayes.classify(features);
 }
 

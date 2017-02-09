@@ -45,16 +45,24 @@ var ft = new FeatureExtractor(function(error) {
 
 		var trainSetFolder = '20newsgroup/20news-bydate-train';
 		var testSetFolder = '20newsgroup/20news-bydate-test';
+		var tfidfFolder = '20newsgrouptfidf';
+		var existsTfIdfFiles = ft.LoadExtractedTfIdfs(trainSetFolder, tfidfFolder);
 
-		ft.LoadExtractedCategories(extractedTrainSetFolder, true);
+		if (!existsTfIdfFiles) {
+			ft.LoadExtractedCategories(extractedTrainSetFolder, true);
+		}
+
 		ft.LoadExtractedCategories(extractedTestSetFolder, false);
 
 		if (!fs.existsSync('20newsgroupextracted')) {
 			fs.mkdirSync('20newsgroupextracted');
 		}
 		
-		ft.ExtractCategories(trainSetFolder, extractedTrainSetFolder, true);
-		ft.SelectFeatures();
+		if (!existsTfIdfFiles) {
+			ft.ExtractCategories(trainSetFolder, extractedTrainSetFolder, true);
+			ft.SelectFeatures(tfidfFolder);
+		}
+
 		ft.ExtractCategories(testSetFolder, extractedTestSetFolder, false);
 
 		var trainingSet = ft.GetTrainingRowsFeatures();

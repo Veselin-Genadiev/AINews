@@ -2,10 +2,16 @@
 var path = require('path');
 var natural = require('natural');
 var fs = require('fs');
+//var categories = ['alt.atheism', 'comp.graphics', 'comp.os.ms-windows.misc', 'comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware',
+//'comp.windows.x', 'misc.forsale', 'rec.autos', 'rec.motorcycles', 'rec.sport.baseball', 'rec.sport.hockey', 'sci.crypt', 'sci.electronics',
+//'sci.med', 'sci.space', 'soc.religion.christian', 'talk.politics.guns', 'talk.politics.mideast', 'talk.politics.misc', 'talk.religion.misc'];
+
+var categories = ['rec.autos', 'rec.sport.baseball', 'sci.electronics', 'sci.space', 'talk.politics.misc', 'talk.religion.misc'];
 
 function getDirectories (srcpath) {
-  return fs.readdirSync(srcpath)
-    .filter(file => fs.statSync(path.join(srcpath, file)).isDirectory())
+	return categories;
+ // return fs.readdirSync(srcpath)
+  //  .filter(file => fs.statSync(path.join(srcpath, file)).isDirectory())
 }
 
 Set.prototype.isSuperset = function(subset) {
@@ -51,7 +57,7 @@ var FeatureExtractor = function (callback) {
 	this.trainingRowsTfidfIndexes = [];
 	this.trainingRowsFeatures = [];
 	this.testRowsFeatures = [];
-	this.tfidfs = {};
+	this.tfidf = new natural.TfIdf();
 	this.documentIndexes = {};
 	this.currentDocumentIndex = -1;
 
@@ -63,12 +69,27 @@ var FeatureExtractor = function (callback) {
 	this.tagger = new natural.BrillPOSTagger(lexiconFilename, rulesFilename, defaultCategory, callback);
 };
 
-FeatureExtractor.prototype.SelectFeatures = function () {
+FeatureExtractor.prototype.SelectFeatures = function (tfidfFolder) {
 	console.log(this.trainingRowsTfidfIndexes.length);
+
+	if (!fs.existsSync(tfidfFolder)) {
+		fs.mkdirSync(tfidfFolder);
+	}
+
+	for (var i = 0; i < categories.length; i++) {
+		var newsCategory = categories[i];
+
+		if (!fs.existsSync(tfidfFolder + '/' + newsCategory)) {
+			fs.mkdirSync(tfidfFolder + '/' + newsCategory);
+		}
+	}
+
 	var allRowsFeatures = this.trainingRowsTfidfIndexes.map(index => {
-		console.log('asd');
-		var terms = this.tfidfs[index.category].listTerms(index.index).splice(0, 10).map(tf => tf.term);
+		console.log(this.trainingRowsFeatures.length);
+		var terms = this.tfidf.listTerms(index.index).splice(0, 15).map(tf => tf.term);
 		terms.push(index.category);
+		var text = terms.join(' ');
+		fs.writeFileSync(tfidfFolder + '/' + index.category + '/' + index.file, text);
 		this.trainingRowsFeatures.push(terms);
 		return terms;
 	});
@@ -87,19 +108,42 @@ FeatureExtractor.prototype.GetTrainingRowsFeatures = function () {
 	return this.trainingRowsFeatures;
 };
 
-FeatureExtractor.prototype.LoadExtractedCategories = function (rootFolder, isTraining) {
-	if (fs.existsSync(rootFolder)) {
-		var categories = getDirectories(rootFolder);
-		if (isTraining) {
-			for (var i = 0; i < categories.length; i++) {
-				var newsCategory = categories[i];
-				this.tfidfs[newsCategory] = new natural.TfIdf();
-			}
-		}
+FeatureExtractor.prototype.LoadExtractedTfIdfs = function (trainFolder, tfidfFolder) {
+	var filePaths = [];
 
+	if (fs.existsSync(tfidfFolder)) {
 		for (var i = 0; i < categories.length; i++) {
 			var newsCategory = categories[i];
-			this.currentDocumentIndex = -1;
+
+			if (fs.existsSync(trainFolder + '/' + newsCategory)) {
+				var files = fs.readdirSync(trainFolder + "/" + newsCategory);
+
+
+				files.forEach(file => {
+					filePaths.push(tfidfFolder + '/' + newsCategory + '/' + file);
+				});
+			}
+		}
+	}
+
+	if (filePaths.lengt == 0 || !filePaths.every(path => fs.existsSync(path))) {
+		return false;
+	}
+
+	filePaths.forEach(path => {
+		var text = fs.readFileSync(path, 'utf8');
+		this.trainingRowsFeatures.push(text.split(' '));
+	});
+
+	var flatten = [].concat.apply([], this.trainingRowsFeatures);
+	this.allFeatureSet = new Set(flatten);
+	return true;
+};
+
+FeatureExtractor.prototype.LoadExtractedCategories = function (rootFolder, isTraining) {
+	if (fs.existsSync(rootFolder)) {
+		for (var i = 0; i < categories.length; i++) {
+			var newsCategory = categories[i];
 
 			if (fs.existsSync(rootFolder + '/' + newsCategory)) {
 				var files = fs.readdirSync(rootFolder + "/" + newsCategory);
@@ -111,13 +155,13 @@ FeatureExtractor.prototype.LoadExtractedCategories = function (rootFolder, isTra
 						if (isTraining) {
 							this.currentDocumentIndex++;
 							this.documentIndexes[file] = this.currentDocumentIndex;
-							this.tfidfs[newsCategory].addDocument(text);
-							this.trainingRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory });
+							this.tfidf.addDocument(text);
+							this.trainingRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory, file: file });
 						} else {
 							var features = text.split(' ');
 							features.push(newsCategory);
 							this.testRowsFeatures.push(features);
-							this.testRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory });
+							this.testRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory, file: file });
 						}
 					}
 				});
@@ -127,20 +171,13 @@ FeatureExtractor.prototype.LoadExtractedCategories = function (rootFolder, isTra
 };
 
 FeatureExtractor.prototype.ExtractCategories = function (rootFolder, rootFolderExtracted, isTraining) {
-	var categories = getDirectories(rootFolder);
-	
 	if (!fs.existsSync(rootFolderExtracted)) {
 		fs.mkdirSync(rootFolderExtracted);
 	}
 	
 	for (var i = 0; i < categories.length; i++) {
 		var newsCategory = categories[i];
-		
-		if (!this.tfidfs[newsCategory]) {
-			this.tfidfs[newsCategory] = new natural.TfIdf();
-		}
 
-		this.currentDocumentIndex = -1;
 		var files = fs.readdirSync(rootFolder + "/" + newsCategory);
 
 		if (!fs.existsSync(rootFolderExtracted + "/" + newsCategory)) {
@@ -160,12 +197,12 @@ FeatureExtractor.prototype.ExtractCategories = function (rootFolder, rootFolderE
 				if (isTraining) {
 					this.currentDocumentIndex++;
 					this.documentIndexes[file] = this.currentDocumentIndex;
-					this.tfidfs[newsCategory].addDocument(text);
-					this.trainingRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory });
+					this.tfidf.addDocument(text);
+					this.trainingRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory, file: file });
 				} else {
 					features.push(newsCategory);
 					this.testRowsFeatures.push(features);
-					this.testRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory });
+					this.testRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory, file: file });
 				}
 			}
 		});
@@ -198,10 +235,10 @@ FeatureExtractor.prototype.ExtractDocument = function (text, isTraining) {
 
 	// bigrams, trigrams
 	var bigrams = natural.NGrams.bigrams(tokens);
-	bigrams = bigrams.filter(bigram => bigram.filter(b => posWords.includes(b)) > 0);
-	
+	bigrams = bigrams.filter(bigram => posWords.includes(bigram[0]) || posWords.includes(bigram[1]));
+
 	var trigrams = natural.NGrams.trigrams(tokens);
-	trigrams = trigrams.filter(trigram => trigram.filter(t => posWords.includes(t)) > 0);
+	trigrams = trigrams.filter(trigram => posWords.includes(trigram[0]) || posWords.includes(trigram[1]) || posWords.includes(trigram[2]));
 
 	// stems
 	tokens = posWords;
