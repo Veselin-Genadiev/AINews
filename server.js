@@ -42,7 +42,7 @@ var ft = new FeatureExtractor(function(error) {
 		}
 
 		// Extract features for all documents.
-		var extractedTrainSetFolder = '20newsgroupextracted/20news-bydate-trainte';
+		var extractedTrainSetFolder = '20newsgroupextracted/20news-bydate-train';
 		var extractedTestSetFolder = '20newsgroupextracted/20news-bydate-test';
 
 		var trainSetFolder = '20newsgroup/20news-bydate-train';

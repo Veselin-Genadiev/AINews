@@ -7,14 +7,10 @@ var NaiveBayes  = function (trainSet, testSet) {
 	this.trainSet = trainSet;
 	this.testSet = testSet;
 	this.naiveBayes = null;
-	this.classifierFile = 'classifier.data';
 
-	if (!this.Load()) {
-		this.Build();
-		this.Train();
-		this.Test();
-		this.Save();
-	}
+	this.Build();
+	this.Train();
+	this.Test();
 };
 
 NaiveBayes.prototype.Build = function () {
@@ -50,21 +46,6 @@ NaiveBayes.prototype.Test = function () {
 	};
 
 	console.log('Accuracy: ' + (this.testSet.length - errors) / this.testSet.length)
-};
-
-NaiveBayes.prototype.Save = function () {
-	var intentClassifierString = serialize.toString(this.naiveBayes, this.naiveBayes);
-	fs.writeFileSync(this.classifierFile, intentClassifierString);
-};
-
-NaiveBayes.prototype.Load = function () {
-	if (fs.existsSync(this.classifierFile)) {
-		var intentClassifierString = fs.readFileSync(this.classifierFile);
-		this.naiveBayes = serialize.fromString(intentClassifierString, __dirname);
-		return true;
-	}
-
-	return false;
 };
 
 NaiveBayes.prototype.Classify = function (features) {
