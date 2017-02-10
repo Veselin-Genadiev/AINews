@@ -42,38 +42,53 @@ var ft = new FeatureExtractor(function(error) {
 		}
 
 		// Extract features for all documents.
-		var extractedTrainSetFolder = '20newsgroupextracted/20news-bydate-train';
+		var extractedTrainSetFolder = '20newsgroupextracted/20news-bydate-trainte';
 		var extractedTestSetFolder = '20newsgroupextracted/20news-bydate-test';
 
 		var trainSetFolder = '20newsgroup/20news-bydate-train';
 		var testSetFolder = '20newsgroup/20news-bydate-test';
 		var tfidfFolder = '20newsgrouptfidf';
+
+		console.log('start load saved tfidf files');
 		var existsTfIdfFiles = ft.LoadExtractedTfIdfs(trainSetFolder, tfidfFolder);
+		console.log('end load saved tfidf files');
 
 		if (!existsTfIdfFiles) {
+			console.log('start load extracted train set features');
 			ft.LoadExtractedCategories(extractedTrainSetFolder, true);
+			console.log('end load extracted train set features');
 		}
 
+		console.log('start load extracted test set features');
 		ft.LoadExtractedCategories(extractedTestSetFolder, false);
+		console.log('start load extracted test set features');
 
 		if (!fs.existsSync('20newsgroupextracted')) {
 			fs.mkdirSync('20newsgroupextracted');
 		}
 		
 		if (!existsTfIdfFiles) {
+			console.log('start extract train set features');
 			ft.ExtractCategories(trainSetFolder, extractedTrainSetFolder, true);
+			console.log('end extract train set features');
+			console.log('start select train set features');
 			ft.SelectFeatures(tfidfFolder);
+			console.log('end select train set features');
 		}
 
+		console.log('start extract test set features');
 		ft.ExtractCategories(testSetFolder, extractedTestSetFolder, false);
+		console.log('end extract test set features');
 		var trainingSet = ft.GetTrainingRowsFeatures();
 		var testSet = ft.GetTestRowsFeatures();
 
-		console.log('train');
+		console.log('start train');
 		classifier = new NaiveBayes(trainingSet, testSet);
-		console.log('trainend');
+		console.log('end train');
 
+		console.log('start update elastic search index')
 		elastic.UpdateIndex();
+		console.log('end update elastic search index')
 	}
 });
 

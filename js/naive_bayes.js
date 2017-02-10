@@ -1,14 +1,20 @@
 'use strict';
 var limdu = require('limdu');
+var serialize = require('serialization');
+var fs = require('fs');
 
 var NaiveBayes  = function (trainSet, testSet) {
 	this.trainSet = trainSet;
 	this.testSet = testSet;
 	this.naiveBayes = null;
+	this.classifierFile = 'classifier.data';
 
-	this.Build();
-	this.Train();
-	this.Test();
+	if (!this.Load()) {
+		this.Build();
+		this.Train();
+		this.Test();
+		this.Save();
+	}
 };
 
 NaiveBayes.prototype.Build = function () {
@@ -36,13 +42,29 @@ NaiveBayes.prototype.Test = function () {
 
 	for (var i = 0; i < this.testSet.length; i++) {
 		var features = this.testSet[i];
+		var testCategory = features.pop();
 		var category = this.naiveBayes.classify(features);
-		if (category != features[features.length - 1]) {
+		if (category != testCategory) {
 			errors++;
 		}
 	};
 
 	console.log('Accuracy: ' + (this.testSet.length - errors) / this.testSet.length)
+};
+
+NaiveBayes.prototype.Save = function () {
+	var intentClassifierString = serialize.toString(this.naiveBayes, this.naiveBayes);
+	fs.writeFileSync(this.classifierFile, intentClassifierString);
+};
+
+NaiveBayes.prototype.Load = function () {
+	if (fs.existsSync(this.classifierFile)) {
+		var intentClassifierString = fs.readFileSync(this.classifierFile);
+		this.naiveBayes = serialize.fromString(intentClassifierString, __dirname);
+		return true;
+	}
+
+	return false;
 };
 
 NaiveBayes.prototype.Classify = function (features) {

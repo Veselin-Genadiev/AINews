@@ -52,7 +52,6 @@ var FeatureExtractor = function (callback) {
 	natural.PorterStemmer.attach();
 	this.tokenizer = new natural.WordTokenizer();
 	this.allFeatureSet = new Set();
-	this.testRowsTfidfIndexes = [];
 	this.trainingRowsTfidfIndexes = [];
 	this.trainingRowsFeatures = [];
 	this.testRowsFeatures = [];
@@ -83,19 +82,19 @@ FeatureExtractor.prototype.SelectFeatures = function (tfidfFolder) {
 		}
 	}
 
-	var allRowsFeatures = this.trainingRowsTfidfIndexes.map(index => {
+	this.trainingRowsTfidfIndexes.forEach(index => {
 		console.log(this.trainingRowsFeatures.length);
 		var terms = this.tfidf.listTerms(index.index).splice(0, 15).map(tf => tf.term);
 		terms.push(index.category);
+		this.trainingRowsFeatures.push(terms);
 		var text = terms.join(' ');
 		fs.writeFileSync(tfidfFolder + '/' + index.category + '/' + index.file, text);
-		this.trainingRowsFeatures.push(terms);
-		return terms;
 	});
 
 	console.log('set start');
-	var flatten = [].concat.apply([], allRowsFeatures);
+	var flatten = [].concat.apply([], this.trainingRowsFeatures);
 	this.allFeatureSet = new Set(flatten);
+	console.log(this.allFeatureSet.size);
 	console.log('set end');
 };
 
@@ -136,6 +135,7 @@ FeatureExtractor.prototype.LoadExtractedTfIdfs = function (trainFolder, tfidfFol
 
 	var flatten = [].concat.apply([], this.trainingRowsFeatures);
 	this.allFeatureSet = new Set(flatten);
+	console.log(this.allFeatureSet.size);
 	return true;
 };
 
@@ -160,7 +160,6 @@ FeatureExtractor.prototype.LoadExtractedCategories = function (rootFolder, isTra
 							var features = text.split(' ');
 							features.push(newsCategory);
 							this.testRowsFeatures.push(features);
-							this.testRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory, file: file });
 						}
 					}
 				});
@@ -201,7 +200,6 @@ FeatureExtractor.prototype.ExtractCategories = function (rootFolder, rootFolderE
 				} else {
 					features.push(newsCategory);
 					this.testRowsFeatures.push(features);
-					this.testRowsTfidfIndexes.push({ index: this.currentDocumentIndex, category: newsCategory, file: file });
 				}
 			}
 		});
