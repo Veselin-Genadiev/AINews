@@ -25,7 +25,7 @@ $(document).ready(function () {
         resultsList.html('');
         res.forEach(item => {
             resultsList.append("<li><a href='" + item.url +"'>" + item.title +
-             "</a><button class='related_button' id='"+ item.id +"'>Related images:</button></li>" +
+             "</a><button class='related_button' id='"+ item.id +"'>Related images:</button>" +
              "</a><button class='classify_button' id='"+ item.id +"'>Category?:</button></li>");
         });
       });

@@ -233,9 +233,9 @@
   to {opacity: 1}
 }
 
-div.related_button {
-    display:inline-block;
+button.related_button, button.classify_button {
     color:#444;
+    margin-left: 10px;
     border:1px solid #CCC;
     background:#DDD;
     box-shadow: 0 0 5px -1px rgba(0,0,0,0.2);
@@ -244,10 +244,20 @@ div.related_button {
     max-width: 100px;
     padding: 5px;
     text-align: center;
+    border-radius: 20px;
 }
-div.related_button:active {
+button.related_button:active, button.classify_button:active {
     color:red;
     box-shadow: 0 0 5px -1px rgba(0,0,0,0.6);
+}
+
+button.related_button:hover, button.classify_button:hover {
+    color:blue;
+    box-shadow: 0 0 5px -1px rgba(0,0,0,0.6);
+}
+
+#results_list > li {
+    margin-top: 10px;
 }
 
 

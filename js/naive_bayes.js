@@ -1,6 +1,5 @@
 'use strict';
 var limdu = require('limdu');
-var serialize = require('serialization');
 var fs = require('fs');
 
 var NaiveBayes  = function (trainSet, testSet) {
